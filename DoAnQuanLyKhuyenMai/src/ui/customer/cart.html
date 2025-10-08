@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Giỏ hàng</title>
+  <style>
+    :root{
+      --bg:#f8fafc;--card:#fff;--muted:#6b7280;--brand:#2563eb;--brand-2:#1d4ed8;--border:#e5e7eb;--danger:#ef4444;--ok:#16a34a;--shadow:0 6px 20px rgba(0,0,0,.06)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#0f172a}
+    a{text-decoration:none;color:inherit}
+    .header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--border)}
+    .header-inner{max-width:1200px;margin:0 auto;display:flex;gap:16px;align-items:center;padding:12px}
+    .logo{font-weight:800;font-size:20px;color:var(--brand)}
+    .container{max-width:1200px;margin:16px auto;padding:0 12px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+    @media (max-width: 980px){.container{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}
+    .cart-list{padding:8px}
+    .item{display:grid;grid-template-columns:120px 1fr 180px 120px 40px;gap:12px;align-items:center;padding:12px;border-bottom:1px solid var(--border)}
+    @media (max-width: 900px){.item{grid-template-columns:100px 1fr 160px 120px 40px}}
+    @media (max-width: 640px){.item{grid-template-columns:80px 1fr;grid-auto-rows:auto}}
+    .thumb{width:100%;aspect-ratio:4/3;background:#e2e8f0;border-radius:10px;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .name{font-weight:600}
+    .muted{color:var(--muted)}
+    .price{font-weight:800}
+    .old{color:var(--muted);text-decoration:line-through;margin-left:6px}
+    .qty{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .qty button{width:36px;height:36px;border:0;background:#fff;cursor:pointer}
+    .qty input{width:56px;text-align:center;border:0;outline:none}
+    .remove{background:transparent;border:0;color:var(--danger);cursor:pointer}
+    .summary{padding:16px;display:flex;flex-direction:column;gap:12px}
+    .row{display:flex;justify-content:space-between;align-items:center}
+    .total{font-size:20px;font-weight:800}
+    .btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;width:100%;padding:12px;border:0;border-radius:12px;background:var(--brand);color:#fff;cursor:pointer}
+    .btn:hover{background:var(--brand-2)}
+    .code{display:flex;gap:8px}
+    .code input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px}
+    .pill.ok{background:#dcfce7;color:#166534}
+    .pill.bad{background:#fee2e2;color:#991b1b}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+    .toolbar .left{display:flex;align-items:center;gap:12px}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    /* empty */
+    .empty{padding:32px;text-align:center;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="logo" href="/shop/index.html">PromoShop</a>
+      <div style="margin-left:auto"><a href="/shop/index.html">← Tiếp tục mua sắm</a></div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- LEFT: Cart items -->
+    <section class="card">
+      <div class="toolbar">
+        <div class="left">
+          <strong>Giỏ hàng</strong>
+          <span id="cart-count" class="muted">0 sản phẩm</span>
+        </div>
+        <div>
+          <label class="sr-only" for="day">Ngày áp dụng khuyến mãi</label>
+          <input id="day" type="date" />
+        </div>
+      </div>
+      <div id="list" class="cart-list"></div>
+    </section>
+
+    <!-- RIGHT: Summary -->
+    <aside class="card">
+      <div class="summary">
+        <div class="code">
+          <label class="sr-only" for="coupon">Mã giảm giá</label>
+          <input id="coupon" placeholder="Nhập mã giảm giá (ví dụ: SALE10)"/>
+          <button id="apply" class="btn" type="button">Áp mã</button>
+        </div>
+        <div id="code-status"></div>
+
+        <div class="row"><span>Tạm tính</span><span id="sub" class="price">0 đ</span></div>
+        <div class="row"><span>Giảm khuyến mãi</span><span id="disc" class="price">-0 đ</span></div>
+        <div class="row muted"><span>Phí vận chuyển</span><span>—</span></div>
+        <hr/>
+        <div class="row total"><span>Tổng cộng</span><span id="total">0 đ</span></div>
+        <button class="btn" type="button" onclick="alert('Tiến hành thanh toán (demo)')">Tiến hành thanh toán</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const CUST_ID = 'CUST001';
+    const state = {
+      items: [],           // [{customer_id, added_at, item_id, product_id, qty}]
+      details: {},         // product_id -> {name, price, image_url, category}
+      discounts: {},       // product_id -> {percent?, amount?}
+      subTotal: 0,
+      discountTotal: 0,
+      total: 0,
+      code: null           // thông tin mã (nếu áp)
+    };
+
+    function vnd(n){ return Number(n||0).toLocaleString('vi-VN') + ' đ'; }
+    function fmtDate(d){ try{ return (typeof d==='string')?d.slice(0,10):new Date(d).toISOString().slice(0,10);}catch{return String(d)} }
+
+    // --- API helpers ---
+    async function apiCart(){ const r=await fetch('/api/customer/cart?customer_id='+encodeURIComponent(CUST_ID)); return (await r.json()).data||[]; }
+    async function apiPatch(item){ return fetch('/api/customer/cart',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)}).then(r=>r.json()); }
+    async function apiDelete(item){ return fetch('/api/customer/cart',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)}).then(r=>r.json()); }
+    async function apiActivePromos(day){ const r=await fetch('/api/customer/promotions/active?day='+encodeURIComponent(day)); const j=await r.json(); return j.ok?(j.data||[]):[]; }
+    async function apiProductsByPromo(id){ const r=await fetch('/api/customer/promotions/'+encodeURIComponent(id)+'/products'); const j=await r.json(); return j.ok?(j.data||[]):[]; }
+    async function apiProductDetail(id){
+      try{
+        const r=await fetch('/api/customer/products/'+encodeURIComponent(id));
+        if(!r.ok) return null; const j=await r.json(); return j.ok?j.data:null;
+      }catch(e){ return null; }
+    }
+    async function apiApplyCode(payload){ const r=await fetch('/api/customer/apply-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); return r.json(); }
+
+    // --- Load everything ---
+    async function loadCart(){
+      document.getElementById('day').value = document.getElementById('day').value || new Date().toISOString().slice(0,10);
+      const day = document.getElementById('day').value;
+
+      // 1) Cart
+      state.items = await apiCart();
+
+      // 2) Product details (name, price, image)
+      const ids = [...new Set(state.items.map(x=>x.product_id))];
+      state.details = {};
+      for (const id of ids){
+        const d = await apiProductDetail(id);
+        state.details[id] = d || { name:'Sản phẩm '+id, price:null, image_url:'https://picsum.photos/seed/'+id+'/600/400', category:'' };
+      }
+
+      // 3) Discounts from active promos today
+      state.discounts = {};
+      const promos = await apiActivePromos(day);
+      for (const p of promos){
+        const rows = await apiProductsByPromo(p.promo_id);
+        rows.forEach(x=>{
+          // nếu 1 sp nằm nhiều promo, lấy mức giảm "tối đa"
+          const cur = state.discounts[x.product_id] || { percent:0, amount:0 };
+          const np = x.discount_percent || 0;
+          const na = x.discount_amount  || 0;
+          state.discounts[x.product_id] = {
+            percent: Math.max(cur.percent, np),
+            amount:  Math.max(cur.amount,  na)
+          };
+        });
+      }
+
+      renderList();
+      calcTotals();
+    }
+
+    // --- Render cart items ---
+    function renderList(){
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      document.getElementById('cart-count').textContent = `${state.items.length} sản phẩm`;
+
+      if (!state.items.length){
+        list.innerHTML = `<div class="empty">Giỏ hàng trống. <a href="/shop/index.html">Tiếp tục mua sắm</a></div>`;
+        return;
+      }
+
+      state.items.forEach(it=>{
+        const d = state.details[it.product_id] || {};
+        const disc = state.discounts[it.product_id] || {};
+        const img = d.image_url;
+        const name = d.name || ('Sản phẩm '+it.product_id);
+        const base = Number(d.price||0);
+        const priceAfter = computePrice(base, disc.percent, disc.amount);
+        const lineBase = base * it.qty;
+        const lineAfter = priceAfter * it.qty;
+
+        const row = document.createElement('div');
+        row.className='item';
+        row.innerHTML = `
+          <div class="thumb"><img src="${img}" alt="${name}"/></div>
+          <div>
+            <div class="name">${name}</div>
+            <div class="muted">${it.product_id}</div>
+            <div class="muted">Ngày thêm: ${fmtDate(it.added_at)}</div>
+          </div>
+          <div>
+            ${base ? `<span class="price">${vnd(priceAfter)}</span>${priceAfter!==base?`<span class="old">${vnd(base)}</span>`:''}` : `<span class="muted">—</span>`}
+            ${disc.percent? `<div class="pill ok" style="margin-top:6px">- ${disc.percent}%</div>`:''}
+            ${disc.amount?  `<div class="pill ok" style="margin-top:6px">- ${vnd(disc.amount)}</div>`:''}
+          </div>
+          <div>
+            <div class="qty" role="group" aria-label="Số lượng">
+              <button type="button" aria-label="Giảm" onclick="decQty('${it.item_id}','${fmtDate(it.added_at)}')">−</button>
+              <input id="q-${it.item_id}" value="${it.qty}" inputmode="numeric" aria-label="Số lượng"/>
+              <button type="button" aria-label="Tăng" onclick="incQty('${it.item_id}','${fmtDate(it.added_at)}')">＋</button>
+            </div>
+            <div class="muted" style="margin-top:6px">Tạm tính: <b>${vnd(lineAfter)}</b></div>
+          </div>
+          <div>
+            <button class="remove" type="button" aria-label="Xóa" onclick="removeItem('${it.item_id}','${fmtDate(it.added_at)}')">✕</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function computePrice(base, percent, amount){
+      if (!base) return 0;
+      let after = base;
+      if (percent) after = Math.round(after * (100 - Number(percent)) / 100);
+      if (amount)  after = Math.max(0, after - Number(amount));
+      return after;
+    }
+
+    function readQty(itemId){
+      const v = parseInt(document.getElementById('q-'+itemId)?.value || '1', 10);
+      return isNaN(v) || v<1 ? 1 : v;
+    }
+
+    // --- Totals ---
+    function calcTotals(){
+      let sub = 0, total = 0;
+      state.items.forEach(it=>{
+        const d = state.details[it.product_id] || {};
+        const disc = state.discounts[it.product_id] || {};
+        const base = Number(d.price||0);
+        const after = computePrice(base, disc.percent, disc.amount);
+        sub   += base  * it.qty;
+        total += after * it.qty;
+      });
+      state.subTotal = sub;
+      state.total    = total;
+      state.discountTotal = Math.max(0, sub - total);
+
+      document.getElementById('sub').textContent   = vnd(state.subTotal);
+      document.getElementById('disc').textContent  = '-' + vnd(state.discountTotal);
+      document.getElementById('total').textContent = vnd(state.total);
+    }
+
+    // --- Actions ---
+    async function incQty(itemId, addedAt){
+      const it = state.items.find(x=>x.item_id===itemId && fmtDate(x.added_at)===addedAt);
+      if (!it) return;
+      const qty = readQty(itemId) + 1;
+      const res = await apiPatch({ customer_id:CUST_ID, added_at:addedAt, item_id:itemId, qty });
+      if (res.ok){ it.qty = qty; renderList(); calcTotals(); } else alert(res.error||'Lỗi cập nhật');
+    }
+    async function decQty(itemId, addedAt){
+      const it = state.items.find(x=>x.item_id===itemId && fmtDate(x.added_at)===addedAt);
+      if (!it) return;
+      const qty = Math.max(1, readQty(itemId) - 1);
+      const res = await apiPatch({ customer_id:CUST_ID, added_at:addedAt, item_id:itemId, qty });
+      if (res.ok){ it.qty = qty; renderList(); calcTotals(); } else alert(res.error||'Lỗi cập nhật');
+    }
+    async function removeItem(itemId, addedAt){
+      if(!confirm('Xóa sản phẩm khỏi giỏ?')) return;
+      const res = await apiDelete({ customer_id:CUST_ID, added_at:addedAt, item_id:itemId });
+      if (res.ok){ state.items = state.items.filter(x=>!(x.item_id===itemId && fmtDate(x.added_at)===addedAt)); renderList(); calcTotals(); }
+      else alert(res.error||'Lỗi xóa');
+    }
+
+    // --- Coupon (xác thực + hiển thị trạng thái) ---
+    document.getElementById('apply').onclick = async ()=>{
+      const code = document.getElementById('coupon').value.trim();
+      if (!code) return alert('Nhập mã trước');
+      const day = document.getElementById('day').value || new Date().toISOString().slice(0,10);
+      const r = await apiApplyCode({ customer_id:CUST_ID, code, day });
+      const box = document.getElementById('code-status');
+      if (r.ok){
+        state.code = r.promo;
+        box.innerHTML = `<span class="pill ok">Áp mã hợp lệ: ${r.promo.name} (${r.promo.promo_id})</span>`;
+      } else {
+        state.code = null;
+        box.innerHTML = `<span class="pill bad">Không áp được: ${r.error}</span>`;
+      }
+    };
+
+    document.getElementById('day').addEventListener('change', loadCart);
+
+    // init
+    (async function init(){
+      document.getElementById('day').value = new Date().toISOString().slice(0,10);
+      await loadCart();
+    })();
+  </script>
+</body>
+</html>

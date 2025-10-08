@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>PromoShop</title>
+  <style>
+    :root{--bg:#f8fafc;--card:#fff;--muted:#6b7280;--brand:#2563eb;--brand2:#1d4ed8;--border:#e5e7eb;--shadow:0 6px 20px rgba(0,0,0,.06)}
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:#0f172a}
+    a{text-decoration:none;color:inherit}
+    .header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--border)}
+    .header-inner{max-width:1200px;margin:0 auto;display:flex;gap:16px;align-items:center;padding:12px}
+    .logo{font-weight:800;font-size:20px;color:var(--brand)}
+    .search{flex:1;display:flex;gap:8px}
+    .search input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
+    .btn{padding:10px 14px;border:0;border-radius:10px;background:var(--brand);color:#fff;cursor:pointer}
+    .btn:hover{background:var(--brand2)}
+    .iconbtn{position:relative;display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);padding:8px 12px;border-radius:10px}
+    .badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border-radius:999px;min-width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+    .container{max-width:1200px;margin:16px auto;display:grid;grid-template-columns:260px 1fr;gap:16px;padding:0 12px}
+    @media (max-width:960px){.container{grid-template-columns:1fr}}
+    .sidebar{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:16px;height:fit-content}
+    .side-sec{margin-bottom:18px} .side-sec h4{margin:0 0 10px 0;font-size:15px}
+    .row{display:flex;gap:8px;align-items:center}
+    .main{display:flex;flex-direction:column;gap:16px}
+    .banner{position:relative;background:linear-gradient(135deg,#dbeafe,#eff6ff);border-radius:16px;overflow:hidden;border:1px solid var(--border)}
+    .slides{display:flex;transition:transform .4s ease}
+    .slide{min-width:100%;padding:18px;display:flex;align-items:center;gap:18px}
+    .slide h3{margin:0 0 6px} .slide small{color:var(--muted)}
+    .dots{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px}
+    .dot{width:8px;height:8px;border-radius:999px;background:#cbd5e1} .dot.active{background:#0ea5e9}
+    .toolbar{display:flex;justify-content:space-between;align-items:center}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    @media (max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:780px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+    .thumb{aspect-ratio:4/3;background:#e2e8f0}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .p-body{padding:12px;display:flex;flex-direction:column;gap:8px}
+    .name{font-weight:600}
+    .meta{font-size:12px;color:var(--muted)}
+    .price-row{display:flex;gap:8px;align-items:center}
+    .badge-off{background:#f43f5e;color:#fff;font-size:12px;padding:2px 8px;border-radius:999px}
+    .btn-outline{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;cursor:pointer}
+    .btn-outline:hover{border-color:var(--brand);color:var(--brand)}
+    .btn-primary{flex:1;background:var(--brand);color:#fff;border:0;border-radius:10px;padding:10px;cursor:pointer}
+    .btn-primary:hover{background:var(--brand2)}
+    .muted{color:var(--muted)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    /* ===== Modal (chi tiết SP) ===== */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:1000}
+    .modal{width:min(900px,92vw);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .modal-body{padding:16px}
+    .modal-close{border:0;background:transparent;font-size:20px;cursor:pointer}
+    .modal-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+    @media (max-width:760px){.modal-grid{grid-template-columns:1fr}}
+    .modal-img{width:100%;aspect-ratio:4/3;background:#e2e8f0;border-radius:12px;overflow:hidden}
+    .modal-img img{width:100%;height:100%;object-fit:cover}
+    .modal-field{margin:8px 0}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="logo" href="/shop/index.html">PromoShop</a>
+      <form class="search" onsubmit="event.preventDefault(); applySearch();">
+        <label class="sr-only" for="q">Tìm kiếm</label>
+        <input id="q" placeholder="Tìm theo tên hoặc mã sản phẩm..."/>
+        <button class="btn" type="submit">Tìm</button>
+      </form>
+      <a class="iconbtn" href="/shop/cart.html">🛒 Giỏ hàng <span id="cart-badge" class="badge">0</span></a>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div class="side-sec">
+        <h4>Ngày khuyến mãi</h4>
+        <div class="row">
+          <label class="sr-only" for="day">Ngày</label>
+          <input id="day" type="date" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:10px"/>
+          <button class="btn" type="button" onclick="reloadPromotions()">Tải</button>
+        </div>
+      </div>
+      <div class="side-sec">
+        <h4>Bộ lọc</h4>
+        <div class="row">
+          <button class="btn-outline" type="button" onclick="clearFilters()">Xóa lọc</button>
+        </div>
+        <small class="muted">* Luôn hiển thị toàn bộ sản phẩm từ <code>products_by_id</code>. Nếu ngày có khuyến mãi, giá sau giảm sẽ được tính.</small>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="banner">
+        <div id="slides" class="slides"></div>
+        <div id="dots" class="dots"></div>
+      </section>
+
+      <div class="toolbar"><h2>Tất cả sản phẩm</h2></div>
+      <section id="grid" class="grid" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <!-- Modal chi tiết sản phẩm -->
+  <div id="product-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <strong id="modal-title">Chi tiết sản phẩm</strong>
+        <button class="modal-close" onclick="closeModal()" aria-label="Đóng">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-img"><img id="m-img" src="" alt=""/></div>
+          <div class="modal-info">
+            <div class="modal-field"><div class="meta">Mã sản phẩm</div><div id="m-id">—</div></div>
+            <div class="modal-field"><div class="meta">Tên</div><div id="m-name">—</div></div>
+            <div class="modal-field"><div class="meta">Phân loại</div><div id="m-cat">—</div></div>
+            <div class="modal-field">
+              <div class="meta">Giá</div>
+              <div>
+                <b id="m-price"></b>
+                <span id="m-old" class="muted" style="margin-left:6px;text-decoration:line-through;display:none"></span>
+                <span id="m-badge" class="badge-off" style="margin-left:8px;display:none"></span>
+              </div>
+            </div>
+            <div class="modal-field"><div class="meta">Trạng thái</div><div id="m-status">—</div></div>
+            <div class="row" style="margin-top:12px;gap:8px">
+              <button id="m-add" class="btn-primary" type="button">Thêm vào giỏ</button>
+              <button class="btn-outline" type="button" onclick="closeModal()">Đóng</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = location.origin;
+    const CUST_ID = 'CUST001';
+    const state = { products: [], discounts: {}, slideIndex:0, timer:null };
+
+    const fmtDate = d => { try{ return (typeof d==='string')?d.slice(0,10):new Date(d).toISOString().slice(0,10);}catch{return String(d)} };
+    const vnd = n => Number(n||0).toLocaleString('vi-VN')+' đ';
+
+    const apiAllProducts = async (limit=500) => {
+      const r = await fetch(`${API_BASE}/api/customer/products?limit=${limit}`); const j=await r.json();
+      return j.ok ? (j.data||[]) : [];
+    };
+    const apiActivePromos = async day => {
+      const r = await fetch(`${API_BASE}/api/customer/promotions/active?day=${encodeURIComponent(day)}`); const j=await r.json();
+      return j.ok ? (j.data||[]) : [];
+    };
+    const apiProductsByPromo = async id => {
+      const r = await fetch(`${API_BASE}/api/customer/promotions/${encodeURIComponent(id)}/products`); const j=await r.json();
+      return j.ok ? (j.data||[]) : [];
+    };
+    const apiAddToCart = async pid => {
+      const body = { customer_id:CUST_ID, item_id:'ITEM-'+Date.now(), product_id:pid, qty:1 };
+      const r = await fetch(`${API_BASE}/api/customer/cart`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      return r.json();
+    };
+    const apiProductById = async pid => {
+      const r = await fetch(`${API_BASE}/api/customer/products/${encodeURIComponent(pid)}`); const j=await r.json();
+      return j.ok ? j.data : null;
+    };
+
+    async function loadHomepage(){
+      state.products = await apiAllProducts();
+      const day = document.getElementById('day').value || new Date().toISOString().slice(0,10);
+      const promos = await apiActivePromos(day);
+      renderSlides(promos);
+      state.discounts = {};
+      for (const p of promos){
+        const rows = await apiProductsByPromo(p.promo_id);
+        rows.forEach(x=>{
+          const cur = state.discounts[x.product_id] || { percent:0, amount:0 };
+          state.discounts[x.product_id] = {
+            percent: Math.max(cur.percent, x.discount_percent || 0),
+            amount:  Math.max(cur.amount,  x.discount_amount  || 0)
+          };
+        });
+      }
+      renderProducts(state.products);
+    }
+
+    function renderSlides(promos){
+      const slides = document.getElementById('slides'), dots=document.getElementById('dots');
+      slides.innerHTML=''; dots.innerHTML='';
+      if(!promos.length){
+        slides.innerHTML=`<div class="slide"><div><h3>Không có khuyến mãi trong ngày đã chọn</h3><small>Chọn ngày khác để xem.</small></div></div>`;
+        return;
+      }
+      promos.slice(0,5).forEach((p,i)=>{
+        const el=document.createElement('div'); el.className='slide';
+        el.innerHTML=`
+          <div>
+            <h3>${p.name||'Khuyến mãi'}</h3>
+            <small>Mã: ${p.promo_id} • Loại: ${p.type||'-'}</small><br/>
+            <small>Hiệu lực: ${fmtDate(p.start_date)} → ${fmtDate(p.end_date)}</small>
+          </div>
+          <div class="thumb" aria-hidden="true"><img src="https://picsum.photos/seed/${p.promo_id}/800/480" alt=""></div>`;
+        slides.appendChild(el);
+        const d=document.createElement('div'); d.className='dot'+(i===0?' active':''); d.onclick=()=>go(i); dots.appendChild(d);
+      });
+      state.slideIndex=0; updateSlider();
+      clearInterval(state.timer); state.timer=setInterval(()=>go(state.slideIndex+1),4000);
+    }
+    function go(i){ const total=document.getElementById('slides').children.length; if(!total) return; state.slideIndex=(i+total)%total; updateSlider(); }
+    function updateSlider(){
+      const slides=document.getElementById('slides'); const dots=document.getElementById('dots').children;
+      slides.style.transform=`translateX(-${state.slideIndex*100}%)`;
+      Array.from(dots).forEach((d,idx)=>d.classList.toggle('active', idx===state.slideIndex));
+    }
+
+    function afterPrice(base, disc){
+      if(base==null) return null;
+      let n=Number(base);
+      if(disc?.percent) n=Math.round(n*(100-disc.percent)/100);
+      if(disc?.amount)  n=Math.max(0,n-disc.amount);
+      return n;
+    }
+    function renderProducts(rows){
+      const grid=document.getElementById('grid'); grid.innerHTML='';
+      if(!rows.length){ grid.innerHTML=`<p class="muted">Không có sản phẩm.</p>`; return; }
+      rows.forEach(p=>{
+        const disc=state.discounts[p.product_id]||null;
+        const after=afterPrice(p.price,disc);
+        const badge=disc?(disc.percent?`-${disc.percent}%`:(disc.amount?`-${vnd(disc.amount)}`:'')):'';
+        const el=document.createElement('article'); el.className='card';
+        el.innerHTML=`
+          <div class="thumb"><img src="${p.image_url || ('https://picsum.photos/seed/'+p.product_id+'/600/400')}" alt="${p.name || p.product_id}"/></div>
+          <div class="p-body">
+            <div class="name">${p.name || ('Sản phẩm '+p.product_id)}</div>
+            <div class="meta">${p.category || ''}</div>
+            <div class="price-row">
+              ${
+                p.price!=null
+                ? `<div><b>${vnd(after ?? p.price)}</b>${(after!=null && after!==p.price)?`<span class="muted" style="text-decoration:line-through;margin-left:6px">${vnd(p.price)}</span>`:''}</div>`
+                : `<div class="muted">—</div>`
+              }
+              ${badge?`<span class="badge-off">${badge}</span>`:''}
+            </div>
+            <div class="row" style="gap:8px;margin-top:8px">
+              <button class="btn-outline" type="button" onclick="showProduct('${p.product_id}')">Xem</button>
+              <button class="btn-primary" type="button" onclick="addToCart('${p.product_id}')">Thêm vào giỏ</button>
+            </div>
+          </div>`;
+        grid.appendChild(el);
+      });
+    }
+    function applySearch(){
+      const q=document.getElementById('q').value.trim().toLowerCase();
+      const filtered=state.products.filter(p=>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.product_id && p.product_id.toLowerCase().includes(q))
+      );
+      renderProducts(filtered);
+    }
+    function clearFilters(){ document.getElementById('q').value=''; renderProducts(state.products); }
+    async function addToCart(pid){
+      const j = await apiAddToCart(pid);
+      if(j.ok){
+        const b=document.getElementById('cart-badge');
+        b.textContent=String(parseInt(b.textContent||'0',10)+1);
+      }else{
+        alert(j.error||'Không thêm được vào giỏ');
+      }
+    }
+    async function reloadPromotions(){ await loadHomepage(); }
+
+    // ===== Modal helpers =====
+    function openModal(){ document.getElementById('product-modal').style.display='flex'; }
+    function closeModal(){ document.getElementById('product-modal').style.display='none'; }
+    document.addEventListener('click', (e)=>{
+      const wrap = document.getElementById('product-modal');
+      if(e.target === wrap) closeModal();
+    });
+
+    // Hiện chi tiết sản phẩm
+    async function showProduct(pid){
+      let p = state.products.find(x=>x.product_id===pid);
+      if(!p || (!p.name && !p.image_url)){
+        p = await apiProductById(pid);
+      }
+      if(!p){ return; }
+
+      const disc = state.discounts[pid] || null;
+      const after = afterPrice(p.price, disc);
+
+      document.getElementById('m-id').textContent = p.product_id || '—';
+      document.getElementById('m-name').textContent = p.name || ('Sản phẩm '+pid);
+      document.getElementById('m-cat').textContent = p.category || '—';
+      document.getElementById('m-status').textContent = p.status || '—';
+
+      const img = p.image_url || `https://picsum.photos/seed/${pid}/800/600`;
+      const imgEl = document.getElementById('m-img');
+      imgEl.src = img; imgEl.alt = p.name || pid;
+
+      const priceEl = document.getElementById('m-price');
+      const oldEl   = document.getElementById('m-old');
+      const badgeEl = document.getElementById('m-badge');
+
+      if(p.price != null){
+        priceEl.textContent = (after!=null? after : p.price).toLocaleString('vi-VN') + ' đ';
+        if(after!=null && after !== p.price){
+          oldEl.style.display = 'inline';
+          oldEl.textContent = Number(p.price).toLocaleString('vi-VN') + ' đ';
+        } else {
+          oldEl.style.display = 'none';
+        }
+        if(disc){
+          const label = disc.percent ? `-${disc.percent}%` : (disc.amount ? `-${Number(disc.amount).toLocaleString('vi-VN')} đ` : '');
+          if(label){ badgeEl.style.display='inline-block'; badgeEl.textContent = label; }
+          else { badgeEl.style.display='none'; }
+        } else { badgeEl.style.display='none'; }
+      } else {
+        priceEl.textContent = '—';
+        oldEl.style.display = 'none';
+        badgeEl.style.display = 'none';
+      }
+
+      const addBtn = document.getElementById('m-add');
+      addBtn.onclick = async () => {
+        const j = await apiAddToCart(pid);
+        if(j.ok){
+          const b=document.getElementById('cart-badge');
+          b.textContent=String(parseInt(b.textContent||'0',10)+1);
+          closeModal();
+        } else {
+          alert(j.error || 'Không thêm được vào giỏ');
+        }
+      };
+
+      openModal();
+    }
+
+    (async function init(){
+      document.getElementById('day').value = new Date().toISOString().slice(0,10);
+      await loadHomepage();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!--
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>Promo Admin (Cassandra)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,sans-serif;margin:0;background:#0b1220;color:#e6edf3}
+    .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+    h1{font-size:24px;margin:0 0 12px}
+    h2{font-size:18px;margin:24px 0 8px}
+    .grid{display:grid;gap:16px}
+    .two{grid-template-columns: 1fr 1fr}
+    .card{background:#111a2b;border:1px solid #22324d;border-radius:12px;padding:16px;box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+    label{display:block;font-size:12px;color:#9fb0cc;margin-top:8px}
+    input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #294166;background:#0e1726;color:#e6edf3;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:#3b82f6}
+    .row{display:flex;gap:8px;align-items:center}
+    .btn{border:1px solid #294166;background:#0e1726;color:#e6edf3;padding:8px 12px;border-radius:10px;cursor:pointer}
+    .btn:hover{border-color:#3b82f6}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border-bottom:1px solid #22324d;padding:8px;font-size:14px}
+    .muted{color:#9fb0cc}
+    small{color:#9fb0cc}
+    .ok{color:#22c55e}
+    .err{color:#ef4444}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #294166;background:#0e1726}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Promo Admin (Cassandra)</h1>
+    <small class="muted">Demo thêm / sửa / xoá khuyến mãi; gán sản phẩm; sinh lịch active theo ngày</small>
+
+    <div class="grid two">
+      Promo form -->
+      <!-- <div class="card">
+        <h2>Khuyến mãi</h2>
+        <div class="row">
+          <input id="promo_id" placeholder="promo_id (VD: KM10)" />
+          <button class="btn" onclick="loadPromo()">Tải</button>
+        </div>
+        <label>Tên</label><input id="name" />
+        <label>Loại</label>
+        <select id="type">
+          <option>Giảm giá %</option>
+          <option>Giảm giá tiền</option>
+          <option>Tặng quà</option>
+          <option>Voucher</option>
+        </select>
+        <div class="row">
+          <div style="flex:1">
+            <label>Start date</label><input id="start_date" type="date" />
+          </div>
+          <div style="flex:1">
+            <label>End date</label><input id="end_date" type="date" />
+          </div>
+        </div>
+        <label>Mô tả</label><textarea id="description" rows="3"></textarea>
+        <div class="row">
+          <label style="margin: 12px 0 0 0"><input id="stackable" type="checkbox" /> Cho phép cộng dồn</label>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Tối thiểu đơn (VND)</label><input id="min_order_amount" type="number" min="0" value="0" />
+          </div>
+          <div style="flex:1">
+            <label>Giới hạn / KH</label><input id="limit_per_customer" type="number" min="0" value="0" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:1">
+            <label>Quota toàn cục (nullable)</label><input id="global_quota" placeholder="để trống = không giới hạn" />
+          </div>
+          <div style="flex:1">
+            <label>Kênh (phân tách bằng dấu phẩy)</label><input id="channels" placeholder="online,store" value="online"/>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" onclick="createPromo()">Thêm mới</button>
+          <button class="btn" onclick="updatePromo()">Cập nhật</button>
+          <button class="btn" onclick="deletePromo()">Xoá</button>
+          <span id="promo_msg" class="muted"></span>
+        </div>
+      </div>
+
+      -- Product mapping -->
+      <!-- <div class="card">
+        <h2>Sản phẩm trong KM</h2>
+        <div class="row">
+          <input id="map_promo_id" placeholder="promo_id (VD: KM03)" />
+          <button class="btn" onclick="loadProducts()">Tải DS SP</button>
+        </div>
+        <div class="row">
+          <input id="product_id" placeholder="product_id (VD: SP999)" style="flex:2" />
+          <input id="discount_percent" type="number" placeholder="% (nếu có)" />
+          <input id="discount_amount" type="number" placeholder="VND (nếu có)" />
+          <input id="gift_product_id" placeholder="gift_product_id (nếu có)" />
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" onclick="addProduct()">Thêm SP vào KM</button>
+          <button class="btn" onclick="removeProduct()">Xoá SP khỏi KM</button>
+          <span id="prod_msg" class="muted"></span>
+        </div>
+        <table id="prod_table">
+          <thead><tr><th>product_id</th><th>%</th><th>VND</th><th>Gift</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Lịch active theo ngày</h2>
+      <div class="row">
+        <input id="ad_promo_id" placeholder="promo_id (VD: KM01)" />
+        <button class="btn" onclick="generateActiveDays()">Sinh theo start/end</button>
+        <input id="delete_day" type="date" />
+        <button class="btn" onclick="deleteActiveDay()">Xoá 1 ngày</button>
+        <span class="muted" id="ad_msg"></span>
+      </div>
+      <small class="muted">* Sinh ra các dòng trong <span class="pill">promotions_active_by_day</span> cho toàn khoảng ngày của KM.</small>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Tra cứu nhanh</h2>
+      <div class="row">
+        <input id="q_day" type="date" />
+        <button class="btn" onclick="queryActive()">KM đang diễn ra (day)</button>
+        <input id="q_type" placeholder="VD: Giảm giá %" />
+        <button class="btn" onclick="queryType()">KM theo loại</button>
+      </div>
+      <pre id="result" class="muted" style="white-space:pre-wrap;margin-top:8px"></pre>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const api = (p, opt={}) => fetch(p, { headers: { 'Content-Type': 'application/json' }, ...opt });
+
+    function getPromoPayload() {
+      const global_quota_raw = $('global_quota').value.trim();
+      const channels = ($('channels').value || '').split(',').map(s=>s.trim()).filter(Boolean);
+      return {
+        promo_id: $('promo_id').value.trim(),
+        name: $('name').value.trim(),
+        type: $('type').value,
+        start_date: $('start_date').value || null,
+        end_date: $('end_date').value || null,
+        description: $('description').value.trim(),
+        stackable: $('stackable').checked,
+        min_order_amount: $('min_order_amount').value || 0,
+        limit_per_customer: $('limit_per_customer').value || 0,
+        global_quota: global_quota_raw === '' ? null : global_quota_raw,
+        channels
+      };
+    }
+
+    async function loadPromo() {
+      const id = $('promo_id').value.trim();
+      if (!id) return;
+      const r = await api('/admin/promos/' + encodeURIComponent(id));
+      const j = await r.json();
+      if (!j.ok) return $('promo_msg').textContent = '❌ ' + (j.msg || 'Không tìm thấy');
+      const p = j.data;
+      $('name').value = p.name || '';
+      $('type').value = p.type || 'Giảm giá %';
+      $('start_date').value = p.start_date || '';
+      $('end_date').value = p.end_date || '';
+      $('description').value = p.description || '';
+      $('stackable').checked = !!p.stackable;
+      $('min_order_amount').value = p.min_order_amount || 0;
+      $('limit_per_customer').value = p.limit_per_customer || 0;
+      $('global_quota').value = (p.global_quota === null || p.global_quota === undefined) ? '' : p.global_quota;
+      $('channels').value = Array.isArray(p.channels) ? p.channels.join(',') : (p.channels ? Array.from(p.channels).join(',') : 'online');
+      $('promo_msg').textContent = '✅ Loaded';
+    }
+
+    async function createPromo() {
+      const payload = getPromoPayload();
+      const r = await api('/admin/promos', { method: 'POST', body: JSON.stringify(payload) });
+      const j = await r.json();
+      $('promo_msg').textContent = j.ok ? '✅ Created' : ('❌ ' + (j.msg || 'Error'));
+    }
+
+    async function updatePromo() {
+      const id = $('promo_id').value.trim();
+      const payload = getPromoPayload();
+      const r = await api('/admin/promos/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(payload) });
+      const j = await r.json();
+      $('promo_msg').textContent = j.ok ? '✅ Updated' : ('❌ ' + (j.msg || 'Error'));
+    }
+
+    async function deletePromo() {
+      const id = $('promo_id').value.trim();
+      if (!id) return;
+      if (!confirm('Xoá khuyến mãi ' + id + ' ?')) return;
+      const r = await api('/admin/promos/' + encodeURIComponent(id), { method: 'DELETE' });
+      const j = await r.json();
+      $('promo_msg').textContent = j.ok ? '✅ Deleted' : ('❌ ' + (j.msg || 'Error'));
+    }
+
+    // Products
+    async function loadProducts() {
+      const id = $('map_promo_id').value.trim();
+      if (!id) return;
+      const r = await api('/admin/promos/' + encodeURIComponent(id) + '/products');
+      const j = await r.json();
+      const tb = $('prod_table').querySelector('tbody');
+      tb.innerHTML = '';
+      (j.data || []).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.product_id}</td><td>${row.discount_percent ?? ''}</td><td>${row.discount_amount ?? ''}</td><td>${row.gift_product_id ?? ''}</td>`;
+        tb.appendChild(tr);
+      });
+      $('prod_msg').textContent = j.ok ? '✅ Loaded' : ('❌ ' + (j.msg || 'Error'));
+    }
+
+    async function addProduct() {
+      const promo_id = $('map_promo_id').value.trim();
+      const body = {
+        product_id: $('product_id').value.trim(),
+        discount_percent: $('discount_percent').value || 0,
+        discount_amount: $('discount_amount').value || 0,
+        gift_product_id: $('gift_product_id').value || null
+      };
+      const r = await api('/admin/promos/' + encodeURIComponent(promo_id) + '/products', {
+        method: 'POST', body: JSON.stringify(body)
+      });
+      const j = await r.json();
+      $('prod_msg').textContent = j.ok ? '✅ Added' : ('❌ ' + (j.msg || 'Error'));
+      if (j.ok) loadProducts();
+    }
+
+    async function removeProduct() {
+      const promo_id = $('map_promo_id').value.trim();
+      const product_id = $('product_id').value.trim();
+      if (!promo_id || !product_id) return;
+      const r = await api(`/admin/promos/${encodeURIComponent(promo_id)}/products/${encodeURIComponent(product_id)}`, { method: 'DELETE' });
+      const j = await r.json();
+      $('prod_msg').textContent = j.ok ? '✅ Removed' : ('❌ ' + (j.msg || 'Error'));
+      if (j.ok) loadProducts();
+    }
+
+    // Active days
+    async function generateActiveDays() {
+      const id = $('ad_promo_id').value.trim();
+      const r = await api(`/admin/promos/${encodeURIComponent(id)}/generate-active-days`, { method: 'POST' });
+      const j = await r.json();
+      $('ad_msg').textContent = j.ok ? '✅ Generated' : ('❌ ' + (j.msg || 'Error'));
+    }
+    async function deleteActiveDay() {
+      const id = $('ad_promo_id').value.trim();
+      const day = $('delete_day').value;
+      const r = await api(`/admin/promos/${encodeURIComponent(id)}/active-days/${encodeURIComponent(day)}`, { method: 'DELETE' });
+      const j = await r.json();
+      $('ad_msg').textContent = j.ok ? '✅ Deleted day' : ('❌ ' + (j.msg || 'Error'));
+    }
+
+    // Queries
+    async function queryActive() {
+      const day = $('q_day').value;
+      const r = await api('/promos/active?day=' + encodeURIComponent(day));
+      const j = await r.json();
+      $('result').textContent = JSON.stringify(j, null, 2);
+    }
+    async function queryType() {
+      const type = $('q_type').value;
+      const r = await api('/promos/type/' + encodeURIComponent(type));
+      const j = await r.json();
+      $('result').textContent = JSON.stringify(j, null, 2);
+    }
+  </script>
+</body>
+</html> --> 
